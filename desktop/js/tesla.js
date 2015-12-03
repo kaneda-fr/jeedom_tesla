@@ -72,7 +72,7 @@ function displayEqLogic(_data) {
 function updateDisplayPlugin(_callback) {
     $.ajax({
         type: "POST",
-        url: "plugins/template/core/ajax/template.ajax.php", // ne pas oublier de modifier pour le nom de votre plugin
+        url: "plugins/tesla/core/ajax/tesla.ajax.php", // ne pas oublier de modifier pour le nom de votre plugin
         data: {
             action: "getAll"
         },

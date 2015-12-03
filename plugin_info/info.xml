@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <info>
-    <id>Tesla</id>
-    <name>Tesla</name>
+    <id>tesla</id>
+    <name>tesla</name>
     <description>Plugin pour remonter les informations des vehicules Tesla</description>
     <icon>fa fa-car</icon>
     <licence>GPL</licence>

@@ -2,8 +2,8 @@
 if (!isConnect('admin')) {
     throw new Exception('{{401 - Accès non autorisé}}');
 }
-sendVarToJS('eqType', 'template');
-$eqLogics = eqLogic::byType('template');
+sendVarToJS('eqType', 'tesla');
+$eqLogics = eqLogic::byType('tesla');
 ?>
 
 <div class="row row-overflow">
@@ -96,5 +96,5 @@ $eqLogics = eqLogic::byType('template');
     </div>
 </div>
 
-<?php include_file('desktop', 'template', 'js', 'template'); ?>
+<?php include_file('desktop', 'tesla', 'js', 'tesla'); ?>
 <?php include_file('core', 'plugin.ajax', 'js'); ?>

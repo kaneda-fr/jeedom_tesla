@@ -46,11 +46,11 @@ class tesla extends eqLogic {
     }
     */
 	
-	public static function createToken(login=null, password=null) {
+	public static function createToken($login=null, $password=null) {
 		$json = array(
 				"grant_type" => "password",
-				"client_id" => e4a9949fcfa04068f59abb5a658f2bac0a3428e4652315490b659d5ab3f35a9e,
-				"client_secret"=> c75f14bbadc8bee3a7594412c31416f8300256d7668ea7e6e7f06727bfb9d220,
+				"client_id" => "xxx",
+				"client_secret"=> "yyy",
 				"email" => login,
 				"password" => password
 				);

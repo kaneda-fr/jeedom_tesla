@@ -50,6 +50,7 @@ function tesla_remove() {
 	$cron = cron::byClassAndFunction('tesla', 'pull');
 	if (is_object($cron)) {
 		$cron->remove();
+	}
 }
 
 ?>

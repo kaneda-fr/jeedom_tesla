@@ -40,7 +40,7 @@ try {
 <?php    	
 	echo '<div class="form-group">';
 	echo '<label class="col-sm-4 control-label">{{API Tesla}}</label>';
-	if (!apiAccessOK) {
+	if (!$apiAccessOK) {
 		echo '<div class="col-sm-1"><span class="label label-danger tooltips" style="font-size : 1em;" title="{{Verifiez vos information d\'authentification Tesla & generez un token}}">NOK</span></div>';
 	} else {
 		echo '<div class="col-sm-1"><span class="label label-success" style="font-size : 1em;">OK</span></div>';
@@ -96,7 +96,7 @@ try {
             $('#div_alert').showAlert({message: '{{Creation de Token réussie}}', level: 'success'});
         }
     });
-});
+};
 
 </script>
 
