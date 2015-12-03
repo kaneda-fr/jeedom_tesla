@@ -19,7 +19,7 @@
 /******************************* Includes *******************************/ 
 require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 
-class template extends eqLogic {
+class tesla extends eqLogic {
     /******************************* Attributs *******************************/ 
     /* Ajouter ici toutes vos variables propre à votre classe */
 
@@ -45,6 +45,10 @@ class template extends eqLogic {
 
     }
     */
+	
+	public static function createToken(login=null, password=null) {
+		return;
+	}
  
     /*************************** Methode d'instance **************************/ 
  
@@ -57,7 +61,7 @@ class template extends eqLogic {
      * callback: fonction appelé coté client(JS) pour mettre à jour l'affichage 
      */ 
     public function initStackData() {
-        nodejs::pushUpdate('template::initStackDataEqLogic', array('plugin' => 'template', 'action' => 'saveStack', 'callback' => 'displayEqLogic'));
+        nodejs::pushUpdate('tesla::initStackDataEqLogic', array('plugin' => 'tesla', 'action' => 'saveStack', 'callback' => 'displayEqLogic'));
     }
     
     /* fonnction permettant d'envoyer un nouvel équipement pour sauvegarde et affichage, 
@@ -69,7 +73,7 @@ class template extends eqLogic {
         if(is_object($params)) {
             $paramsArray = utils::o2a($params);
         }
-        nodejs::pushUpdate('template::stackDataEqLogic', $paramsArray);
+        nodejs::pushUpdate('tesla::stackDataEqLogic', $paramsArray);
     }
     
     /* fonction appelé pour la sauvegarde asynchrone
@@ -135,7 +139,7 @@ class template extends eqLogic {
     /*     * **********************Getteur Setteur*************************** */
 }
 
-class templateCmd extends cmd {
+class teslaCmd extends cmd {
     /******************************* Attributs *******************************/ 
     /* Ajouter ici toutes vos variables propre à votre classe */
 

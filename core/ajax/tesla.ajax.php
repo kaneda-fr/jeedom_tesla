@@ -23,23 +23,13 @@ try {
     if (!isConnect('admin')) {
         throw new Exception(__('401 - Accès non autorisé', __FILE__));
     }
-    // action qui permet d'obtenir l'ensemble des eqLogic
-    if (init('action') == 'getAll') {
-        $eqLogics = eqLogic::byType('template'); // ne pas oublier de modifier pour le nom de votre plugin
-        // la liste des équipements
-        foreach ($eqLogics as $eqLogic) {
-            $data['id'] = $eqLogic->getId();
-            $data['humanSidebar'] = $eqLogic->getHumanName(true, false);
-            $data['humanContainer'] = $eqLogic->getHumanName(true, true);
-            $return[] = $data;
-        }
-        ajax::success($return);
-    }
-    // action qui permet d'effectuer la sauvegarde des donéée en asynchrone
-    if (init('action') == 'saveStack') {
-        $params = init('params');
-        ajax::success(template::saveStack($params)); // ne pas oublier de modifier pour le nom de votre plugin
-    }
+    
+    if (init('action') == 'createToken') {
+    	if (! tesla::createToken(init('login'), init('password')) ) {
+    		throw new Exception(__("Erreur lors de la generation du Token sur l'API Tesla", __FILE__));
+    	}
+    	ajax::success();
+    }   
 
     throw new Exception(__('Aucune methode correspondante à : ', __FILE__) . init('action'));
     /*     * *********Catch exeption*************** */

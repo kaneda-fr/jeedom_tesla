@@ -21,46 +21,68 @@ if (!isConnect()) {
     include_file('desktop', '404', 'php');
     die();
 }
+
+$apiAccessOK = fales;
+try {
+	// TEST here API acccess
+	/*
+	$request_http = new com_http(network::getNetworkAccess('internal', 'proto:127.0.0.1:port:comp') . '/plugins/openzwave/core/php/jeeZwave.php?apikey=' . config::byKey('api') . '&test=1');
+	if ($request_http->exec(1, 1) == 'OK') {
+		$apiAccessOK = true;
+	}*/
+} catch (Exception $e) {
+}
+
 ?>
 <form class="form-horizontal">
     <fieldset>
-        <div class="form-group">
-            <label class="col-lg-4 control-label">{{KNX BAOS IP}}</label>
-            <div class="col-lg-2">
-                <input class="configKey form-control" data-l1key="knxipbaosAddr" />
-            </div>
-        </div>
-        <div class="form-group">
-            <label class="col-lg-4 control-label">{{KNX BAOS port}}</label>
-            <div class="col-lg-2">
-                <input class="configKey form-control" data-l1key="knxipbaosPort" value="80" />
-            </div>
-        </div>
-        <div class="form-group">
-            <label class="col-lg-4 control-label">{{Modele}}</label>
-            <div class="col-lg-2">
-                <select class="configKey form-control" data-l1key="knxipbaosModel">
-                    <option value="knxipbaos771">KNX IP BAOS 771</option>
-                    <option value="knxipbaos772">KNX IP BAOS 772</option>
-                </select>
-            </div>
-        </div>
-        <div class="form-group">
-            <label class="col-lg-4 control-label">{{Synchronisation}}</label>
-            <div class="col-lg-2">
-              <a class="btn btn-default" id="bt_syncWithKnxipbaos"><i class="fa fa-retweet"></i> Synchroniser</a>
-          </div>
-      </div>
+    	<legend><i class="fa fa-list-alt"></i> {{Configuration}}</legend>
+<?php    	
+	echo '<div class="form-group">';
+	echo '<label class="col-sm-4 control-label">{{Tesla API}}</label>';
+	if (!apiAccessOK) {
+		echo '<div class="col-sm-1"><span class="label label-danger tooltips" style="font-size : 1em;" title="{{Verifiez vos information d''authentification Tesla & generez un token}}">NOK</span></div>';
+	} else {
+		echo '<div class="col-sm-1"><span class="label label-success" style="font-size : 1em;">OK</span></div>';
+	}
+	echo '</div>';
+?>
   </fieldset>
+</form>
+<form class="form-horizontal">
+	<fieldset>
+		<legend><i class="fa fa-list-alt"></i> {{Authentification tesla}}</legend>
+		<div class="form-group">
+			<label class="col-sm-4 control-label">{{Login API Tesla}}</label>
+			<div class="col-sm-2">
+				<input class="configKey form-control" data-l1key="username" placeholder="Email de votre compte sur le site Tesla" />
+			</div>
+		</div>
+		div class="form-group">
+			<label class="col-sm-4 control-label">{{Mot de passe API Tesla}}</label>
+			<div class="col-sm-2">
+				<input class="configKey form-control" data-l1key="password" placeholder="Mot de passe de votre compte sur le site Tesla" />
+			</div>
+		</div>
+		<div class="col-sm-8">
+			<a class="btn btn-success" id="bt_regenerateToken"><i class='fa fa-refresh'></i> {{(re)Creer token}}</a>
+		</div>
+	</fieldset>
 </form>
 
 <script>
-    $('#bt_syncWithKnxipbaos').on('click',function(){
- $.ajax({// fonction permettant de faire de l'ajax
+    $('#bt_regenerateToken').on('click',function(){
+    	regenerateToken($(this).closest('.login').attr('data-l1key'), $(this).closest('.password').attr('data-l1key'));
+    });
+
+    function regenerateToken(login, password){
+        $.ajax({// fonction permettant de faire de l'ajax
             type: "POST", // methode de transmission des données au fichier php
-            url: "plugins/knxipbaos/core/ajax/knxipbaos.ajax.php", // url du fichier php
+            url: "plugins/tesla/core/ajax/tesla.ajax.php", // url du fichier php
             data: {
-                action: "synchronisation",
+                action: "createToken",
+                login: login,
+                password: password
             },
             dataType: 'json',
             error: function (request, status, error) {
@@ -71,9 +93,10 @@ if (!isConnect()) {
                 $('#div_alert').showAlert({message: data.result, level: 'danger'});
                 return;
             }
-            $('#div_alert').showAlert({message: '{{Synchronisation réussie}}', level: 'success'});
+            $('#div_alert').showAlert({message: '{{Creation de Token réussie}}', level: 'success'});
         }
     });
 });
+
 </script>
 

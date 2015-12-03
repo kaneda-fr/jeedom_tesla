@@ -18,17 +18,38 @@
 
 require_once dirname(__FILE__) . '/../../../core/php/core.inc.php';
 
-function template_install() {
-    
+function tesla_install() {
+	$cron = cron::byClassAndFunction('tesla', 'pull');
+	if (!is_object($cron)) {
+		$cron = new cron();
+		$cron->setClass('tesla');
+		$cron->setFunction('pull');
+		$cron->setEnable(1);
+		$cron->setDeamon(0);
+		$cron->setSchedule('* * * * *');
+		$cron->save();
+	}   
 }
 
-function template_update() {
-    
+function tesla_update() {
+	$cron = cron::byClassAndFunction('tesla', 'pull');
+	if (!is_object($cron)) {
+		$cron = new cron();
+		$cron->setClass('tesla');
+		$cron->setFunction('pull');
+		$cron->setEnable(1);
+		$cron->setDeamon(0);
+		$cron->setSchedule('* * * * *');
+		$cron->save();
+	}
+	$cron->stop();
 }
 
 
-function template_remove() {
-    
+function tesla_remove() {
+	$cron = cron::byClassAndFunction('tesla', 'pull');
+	if (is_object($cron)) {
+		$cron->remove();
 }
 
 ?>
