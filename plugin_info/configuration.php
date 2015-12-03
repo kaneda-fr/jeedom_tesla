@@ -22,7 +22,7 @@ if (!isConnect()) {
     die();
 }
 
-$apiAccessOK = fales;
+$apiAccessOK = false;
 try {
 	// TEST here API acccess
 	/*
@@ -36,12 +36,12 @@ try {
 ?>
 <form class="form-horizontal">
     <fieldset>
-    	<legend><i class="fa fa-list-alt"></i> {{Configuration}}</legend>
+    	<legend><i class="fa fa-list-alt"></i> {{Etat}}</legend>
 <?php    	
 	echo '<div class="form-group">';
-	echo '<label class="col-sm-4 control-label">{{Tesla API}}</label>';
+	echo '<label class="col-sm-4 control-label">{{API Tesla}}</label>';
 	if (!apiAccessOK) {
-		echo '<div class="col-sm-1"><span class="label label-danger tooltips" style="font-size : 1em;" title="{{Verifiez vos information d''authentification Tesla & generez un token}}">NOK</span></div>';
+		echo '<div class="col-sm-1"><span class="label label-danger tooltips" style="font-size : 1em;" title="{{Verifiez vos information d\'authentification Tesla & generez un token}}">NOK</span></div>';
 	} else {
 		echo '<div class="col-sm-1"><span class="label label-success" style="font-size : 1em;">OK</span></div>';
 	}
@@ -58,15 +58,15 @@ try {
 				<input class="configKey form-control" data-l1key="username" placeholder="Email de votre compte sur le site Tesla" />
 			</div>
 		</div>
-		div class="form-group">
+		<div class="form-group">
 			<label class="col-sm-4 control-label">{{Mot de passe API Tesla}}</label>
 			<div class="col-sm-2">
 				<input class="configKey form-control" data-l1key="password" placeholder="Mot de passe de votre compte sur le site Tesla" />
 			</div>
-		</div>
 		<div class="col-sm-8">
 			<a class="btn btn-success" id="bt_regenerateToken"><i class='fa fa-refresh'></i> {{(re)Creer token}}</a>
 		</div>
+	</div>
 	</fieldset>
 </form>
 
