@@ -50,18 +50,6 @@ try {
 	<fieldset>
 		<legend><i class="fa fa-list-alt"></i> {{Authentification tesla}}</legend>
 		<div class="form-group">
-			<label class="col-sm-4 control-label">{{Login API Tesla}}</label>
-			<div class="col-sm-2">
-				<input class="configKey form-control" data-l1key="email" placeholder="Email de votre compte sur le site Tesla" />
-			</div>
-		</div>
-		<div class="form-group">
-			<label class="col-sm-4 control-label">{{Mot de passe API Tesla}}</label>
-			<div class="col-sm-2">
-				<input class="configKey form-control" data-l1key="password" placeholder="Mot de passe de votre compte sur le site Tesla" />
-			</div>
-		</div>
-		<div class="form-group">
 			<label class="col-sm-4 control-label">{{Token}}</label>
 			<div class="col-sm-4">	
 				<input id="token" class="configKey form-control" data-l1key="token" placeholder="Token pour acces a l'API" />
@@ -77,17 +65,13 @@ try {
 
 <script>
     $('#bt_regenerateToken').on('click',function(){
-        //console.log($(this).closest('.email').attr('data-l1key'));
-    	//regenerateToken($(this).closest('.email').attr('data-l1key'), $(this).closest('.password').attr('data-l1key'));
-    	
-    	//regenerateToken($( "input[data-l1key=email]").value(), $( "input[data-l1key=password]").value());
-
         $('#md_modal').dialog({title: "{{Connection au portail Tesla}}"});
         $('#md_modal').load('index.php?v=d&plugin=tesla&modal=get.token').dialog('open');
     	
     });
 
-    function regenerateToken(email, password){
+
+    function getToken(email, password){
         $.ajax({// fonction permettant de faire de l'ajax
             type: "POST", // methode de transmission des données au fichier php
             url: "plugins/tesla/core/ajax/tesla.ajax.php", // url du fichier php
@@ -110,7 +94,7 @@ try {
             $( "[id=token]").val(value=data.result);
         }
     });
-};
-
+    };
+  
 </script>
 
