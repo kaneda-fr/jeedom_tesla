@@ -25,11 +25,14 @@ try {
     }
     
     if (init('action') == 'createToken') {
-    	if (! tesla::createToken(init('login'), init('password')) ) {
-    		throw new Exception(__("Erreur lors de la generation du Token sur l'API Tesla", __FILE__));
-    	}
-    	ajax::success();
+    	$result = tesla::createToken(init('email'), init('password'));
+    	//config::save('token',$result,'tesla');
+    	ajax::success($result);
     }   
+    
+if (init('action') == 'checkAPI') {
+    	ajax::success(tesla::checkAPI());
+    }
 
     throw new Exception(__('Aucune methode correspondante à : ', __FILE__) . init('action'));
     /*     * *********Catch exeption*************** */

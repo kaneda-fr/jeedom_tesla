@@ -46,34 +46,70 @@ class tesla extends eqLogic {
     }
     */
 	
-	public static function createToken($login=null, $password=null) {
+	public static function checkAPI() {
+		$url = "https://owner-api.teslamotors.com/api/1/vehicles";
+		
+		$token = config::byKey('token', 'tesla');
+		
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+		curl_setopt($ch, CURLOPT_HEADER, FALSE);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+				"Authorization: Bearer " . $token,
+				'Content-Type: application/json'
+		));
+		$response = curl_exec($ch);
+		$error = curl_error($ch);
+		$errno = curl_errno($ch);
+		curl_close($ch);
+		
+		return json_decode($response)->{'count'};		
+	}
+	
+	public static function createToken($email=null, $password=null) {
+		$owner_API = "https://owner-api.teslamotors.com/oauth/token";
+		$portal_API = "https://owner-api.teslamotors.com/api/1/vehicles";
+		
 		$json = array(
 				"grant_type" => "password",
-				"client_id" => "xxx",
-				"client_secret"=> "yyy",
-				"email" => login,
-				"password" => password
+				"client_id" => "e4a9949fcfa04068f59abb5a658f2bac0a3428e4652315490b659d5ab3f35a9e",
+				"client_secret"=> "c75f14bbadc8bee3a7594412c31416f8300256d7668ea7e6e7f06727bfb9d220",
+				"email" => $email,
+				"password" => $password
 				);
 		
-		$request = urlencode(json_encode($json));
-		
-		$url = "https://owner-api.teslamotors.com" + '/oauth/token';
+		$data = json_encode($json);
 		
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_URL, $url);
-		curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+		curl_setopt($ch, CURLOPT_URL, $owner_API);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
 		$response = curl_exec($ch);
-		
-		if ($response === false) {
-			echo 'token failed';
-		} else {
-			$token = json_decode($response)->{'access_token'};
-			echo 'token : ' + $token;
-		}
+		$error = curl_error($ch);
+		$errno = curl_errno($ch);
 		curl_close($ch);
 		
-		return;
+		if ($response === false) {
+			log::add('Tesla', 'Error', $error);
+			throw new Exception(__($error, __FILE__));
+		} 
+		
+		if($errno) {
+			throw new Exception(__("Curl Error : " . curl_strerror($errno), __FILE__));
+		}
+
+		if (json_decode($response)->{'access_token'} == null){
+			if (json_decode($response)->{'reponse'} != null){
+				throw new Exception(__(json_decode($response)->{'response'}, __FILE__));
+			} else {
+				throw new Exception(__(json_decode($response)->{'error'} . " - " . json_decode($response)->{'error_description'}, __FILE__));
+			}
+		}
+				
+		return json_decode($response)->{'access_token'};
 	}
  
     /*************************** Methode d'instance **************************/ 
