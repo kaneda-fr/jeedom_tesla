@@ -15,6 +15,10 @@
  * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* Added for sync management */
+$('#bt_syncEqLogic,#bt_syncEqLogic2').on('click', function () {
+    syncEqLogicWithTeslaSite();
+});
 
 
 /*
@@ -35,18 +39,22 @@ function addCmdToTable(_cmd) {
     }
     var tr = '<tr class="cmd" data-cmd_id="' + init(_cmd.id) + '">';
     tr += '<td>';
-    tr += '<span class="cmdAttr" data-l1key="id"></span>';
-    tr += '</td>';
-    tr += '<td>';
+    tr += '<span class="cmdAttr" data-l1key="id" style="display:none;"></span>';
     tr += '<input class="cmdAttr form-control input-sm" data-l1key="name" style="width : 140px;" placeholder="{{Nom}}"></td>';
     tr += '<td>';
     tr += '<input class="cmdAttr form-control type input-sm" data-l1key="type" value="info" disabled style="margin-bottom : 5px;" />';
     tr += '<span class="subType" subType="' + init(_cmd.subType) + '"></span>';
     tr += '</td>';
+    tr += '<td>';
     if (is_numeric(_cmd.id)) {
         tr += '<a class="btn btn-default btn-xs cmdAction expertModeVisible" data-action="configure"><i class="fa fa-cogs"></i></a> ';
         tr += '<a class="btn btn-default btn-xs cmdAction" data-action="test"><i class="fa fa-rss"></i> {{Tester}}</a>';
+        tr += '<br>';
     }
+    tr += '<span><input type="checkbox" class="cmdAttr bootstrapSwitch" data-size="mini" data-l1key="isHistorized" data-label-text=" {{Historiser}}" /></span> ';
+    tr += '<br>';
+    tr += '<span><input type="checkbox" class="cmdAttr bootstrapSwitch" data-size="mini" data-l1key="isVisible" data-label-text=" {{Afficher}}" checked/></span>';
+    tr += '</td>';
     tr += '<i class="fa fa-minus-circle pull-right cmdAction cursor" data-action="remove"></i></td>';
     tr += '</tr>';
     $('#table_cmd tbody').append(tr);
@@ -69,6 +77,7 @@ function displayEqLogic(_data) {
  * de la suppression, de la création
  * _callback: obligatoire, permet d'appeler une fonction en fin de traitement
  */
+
 function updateDisplayPlugin(_callback) {
     $.ajax({
         type: "POST",
@@ -89,12 +98,15 @@ function updateDisplayPlugin(_callback) {
             var htmlSideBar = '';
             var htmlContainer = '';
             // Le plus Geant - ne pas supprimer
-            htmlContainer += '<div class="cursor eqLogicAction" data-action="add" style="background-color : #ffffff; height : 200px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;" >';
+            htmlContainer += '<div class="cursor expertModeVisible" id="bt_syncEqLogic" style="background-color : #ffffff; height : 200px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;" >';
             htmlContainer += '<center>';
-            htmlContainer += '<i class="fa fa-plus-circle" style="font-size : 7em;color:#94ca02;"></i>';
+            htmlContainer += '<i class="fa fa-refresh" style="font-size : 7em;color:#94ca02;"></i>';
             htmlContainer += '</center>';
-            htmlContainer += '<span style="font-size : 1.1em;position:relative; top : 23px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;color:#94ca02"><center>Ajouter</center></span>';
+            htmlContainer += '<span style="font-size : 1.1em;position:relative; top : 23px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;color:#94ca02"><center>Synchroniser</center></span>';
             htmlContainer += '</div>';
+            htmlContainer += '<script>';
+            htmlContainer += "$('#bt_syncEqLogic,#bt_syncEqLogic2').on('click', function () {syncEqLogicWithTeslaSite();});";
+            htmlContainer += '</script>';
             // la liste des équipements
             var eqLogics = data.result;
             for (var i  in eqLogics) {
@@ -103,7 +115,8 @@ function updateDisplayPlugin(_callback) {
                 htmlContainer += '<div class="eqLogicDisplayCard cursor" data-eqLogic_id="' + eqLogics[i].id + '" style="background-color : #ffffff; height : 200px;margin-bottom : 10px;padding : 5px;border-radius: 2px;width : 160px;margin-left : 10px;" >';
                 htmlContainer += "<center>";
                 // lien vers l'image de votre icone
-                htmlContainer += '<img src="plugins/weather/doc/images/weather_icon.png" height="105" width="95" />';
+                // TODO: SLS add car color
+                htmlContainer += '<img src="plugins/tesla/doc/images/tesla_car_icon.png" id=""height="105" width="95" />';     
                 htmlContainer += "</center>";
                 // Nom de votre équipement au format human
                 htmlContainer += '<span style="font-size : 1.1em;position:relative; top : 15px;word-break: break-all;white-space: pre-wrap;word-wrap: break-word;"><center>' + eqLogics[i].humanContainer + '</center></span>';
@@ -113,9 +126,9 @@ function updateDisplayPlugin(_callback) {
             $('#ul_eqLogicView').append(htmlSideBar);
             $('.eqLogicThumbnailContainer').remove();
             $('.eqLogicThumbnailDisplay legend').after($('<div class="eqLogicThumbnailContainer">').html(htmlContainer));
-            $('.eqLogicThumbnailContainer').packery();
+            $('.eqLogicThumbnailContainert').packery();
             $("img.lazy").lazyload({
-                container: $(".eqLogicThumbnailContainer"),
+                container: $(".eqLogicThumbnailContainert"),
                 event : "sporty",
                 skip_invisible : false
             });
@@ -181,4 +194,25 @@ function updateDisplayPlugin(_callback) {
             modifyWithoutSave = false;
         }
     });
+}
+
+function syncEqLogicWithTeslaSite() {
+    $.ajax({// fonction permettant de faire de l'ajax
+        type: "POST", // méthode de transmission des données au fichier php
+        url: "plugins/tesla/core/ajax/tesla.ajax.php", // url du fichier php
+        data: {
+            action: "syncEqLogicWithTeslaSite",
+        },
+        dataType: 'json',
+        error: function (request, status, error) {
+            handleAjaxError(request, status, error);
+        },
+        success: function (data) { // si l'appel a bien fonctionné
+        if (data.state != 'ok') {
+            $('#div_alert').showAlert({message: data.result, level: 'danger'});
+            return;
+        }
+        window.location.reload();
+    }
+});
 }

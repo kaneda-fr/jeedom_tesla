@@ -36,11 +36,11 @@ try {
     	<legend><i class="fa fa-list-alt"></i> {{Etat}}</legend>
 <?php    	
 	echo '<div class="form-group">';
-	echo '<label class="col-sm-4 control-label">{{API Tesla}}</label>';
+	echo '<label class="col-sm-6 control-label">{{API Tesla}}</label>';
 	if (!$apiAccessOK) {
 		echo '<div class="col-sm-1"><span class="label label-danger tooltips" style="font-size : 1em;" title="{{Verifiez vos information d\'identification Tesla & generez un token}}">NOK</span></div>';
 	} else {
-		echo '<div class="col-sm-1"><span class="label label-success" style="font-size : 1em;" title="{{'. $apiAccessOK . ' voiture(s)}}">OK</span></div>';
+		echo '<div class="col-sm-1"><span class="label label-success" style="font-size : 1em;" title="{{'. $apiAccessOK . ' voiture'. ($apiAccessOK == 1 ? '' : 's') . '}}">OK</span></div>';
 	}
 	echo '</div>';
 ?>
@@ -48,18 +48,16 @@ try {
 </form>
 <form class="form-horizontal">
 	<fieldset>
-		<legend><i class="fa fa-list-alt"></i> {{Authentification tesla}}</legend>
+		<legend><i class="fa fa-list-alt"></i> {{Authentification API}}</legend>
 		<div class="form-group">
 			<label class="col-sm-4 control-label">{{Token}}</label>
 			<div class="col-sm-4">	
 				<input id="token" class="configKey form-control" data-l1key="token" placeholder="Token pour acces a l'API" />
 			</div>
 		</div>
-		<div class="form-group">
-			<div class="col-sm-8">
+		<center>
 				<a class="btn btn-success" id="bt_regenerateToken"><i class='fa fa-refresh'></i> {{(re)Creer token}}</a>
-			</div>
-		</div>
+		</center>
 	</fieldset>
 </form>
 

@@ -24,16 +24,35 @@ try {
         throw new Exception(__('401 - Accès non autorisé', __FILE__));
     }
     
+    if (init('action') == 'syncEqLogicWithTeslaSite') {	
+    	tesla::syncEqLogicWithTeslaSite();
+    	ajax::success();
+    }
+    
     if (init('action') == 'createToken') {
     	$result = tesla::createToken(init('email'), init('password'));
     	//config::save('token',$result,'tesla');
     	ajax::success($result);
     }   
     
-if (init('action') == 'checkAPI') {
+	if (init('action') == 'checkAPI') {
     	ajax::success(tesla::checkAPI());
     }
 
+    // action qui permet d'obtenir l'ensemble des eqLogic
+    if (init('action') == 'getAll') {
+    	$eqLogics = eqLogic::byType('tesla'); // ne pas oublier de modifier pour le nom de votre plugin
+    	// la liste des équipements
+    	foreach ($eqLogics as $eqLogic) {
+    		$data['id'] = $eqLogic->getId();
+    		$data['humanSidebar'] = $eqLogic->getHumanName(true, false);
+    		$data['humanContainer'] = $eqLogic->getHumanName(true, true);
+    		$return[] = $data;
+    	}
+    	ajax::success($return);
+    }
+    
+    
     throw new Exception(__('Aucune methode correspondante à : ', __FILE__) . init('action'));
     /*     * *********Catch exeption*************** */
 } catch (Exception $e) {

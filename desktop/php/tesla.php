@@ -10,8 +10,8 @@ $eqLogics = eqLogic::byType('tesla');
     <div class="col-lg-2 col-md-3 col-sm-4">
         <div class="bs-sidebar">
             <ul id="ul_eqLogic" class="nav nav-list bs-sidenav">
-                <a class="btn btn-default eqLogicAction" style="width : 100%;margin-top : 5px;margin-bottom: 5px;" data-action="add">
-                    <i class="fa fa-plus-circle"></i> {{Ajouter un template}} <!-- changer pour votre type d'équipement -->
+                <a class="btn btn-default btn-sm tooltips" id="bt_syncEqLogic" title="Snchroniser la liste des vehicules" style="width : 100%;margin-top : 5px;margin-bottom: 5px;">
+                    <i class="fa fa-refresh"></i> {{Synchroniser}} <!-- changer pour votre type d'équipement -->
                 </a>
                 <li class="filter" style="margin-bottom: 5px;"><input class="filter form-control input-sm" placeholder="{{Rechercher}}" style="width: 100%"/></li>
             </ul>
@@ -20,7 +20,7 @@ $eqLogics = eqLogic::byType('tesla');
     </div>
 
     <div class="col-lg-10 col-md-9 col-sm-8 eqLogicThumbnailDisplay" style="border-left: solid 1px #EEE; padding-left: 25px;">
-        <legend>{{Mes templates}}</legend> <!-- changer pour votre type d'équipement -->
+        <legend>{{Liste des Vehicules}}</legend> <!-- changer pour votre type d'équipement -->
 
         <div class="eqLogicThumbnailContainer"></div> <!-- le container -->
     </div>
@@ -35,10 +35,10 @@ $eqLogics = eqLogic::byType('tesla');
                     <i class='fa fa-cogs eqLogicAction pull-right cursor expertModeVisible' data-action='configure'></i>
                 </legend>
                 <div class="form-group">
-                    <label class="col-sm-3 control-label">{{Nom de l'équipement template}}</label>
+                    <label class="col-sm-3 control-label">{{Nom de la voiture}}</label>
                     <div class="col-sm-3">
                         <input type="text" class="eqLogicAttr form-control" data-l1key="id" style="display : none;" />
-                        <input type="text" class="eqLogicAttr form-control" data-l1key="name" placeholder="{{Nom de l'équipement template}}"/>
+                        <input type="text" class="eqLogicAttr form-control" data-l1key="name" disabled placeholder="{{Nom de la voiture}}"/>
                     </div>
                 </div>
                 <div class="form-group">
@@ -59,21 +59,27 @@ $eqLogics = eqLogic::byType('tesla');
                     <div class="col-sm-1">
                         <input type="checkbox" class="eqLogicAttr" data-l1key="isEnable" size="16" checked/>
                     </div>
-                    <label class="col-sm-3 control-label" >{{Visible}}</label>
+                    <label class="col-sm-1 control-label" >{{Visible}}</label>
                     <div class="col-sm-1">
                         <input type="checkbox" class="eqLogicAttr" data-l1key="isVisible" checked/>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="col-sm-3 control-label">{{template param 1}}</label>
+                    <label class="col-sm-3 control-label">{{VIN}}</label>
                     <div class="col-sm-3">
-                        <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="city" placeholder="param1"/>
+                        <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="vin" disabled placeholder="VIN Number"/>
+                    </div>
+                </div>
+               	<div class="form-group">   
+                    <label class="col-sm-3 control-label">{{Status}}</label>
+                    <div class="col-sm-3">
+                        <input type="text" class="eqLogicAttr configuration form-control" data-l1key="configuration" data-l2key="state" disabled placeholder="State"/>
                     </div>
                 </div>
             </fieldset>
         </form>
 
-        <legend>{{Template}}</legend>
+        <legend>{{Tesla Info}}</legend>
         <table id="table_cmd" class="table table-bordered table-condensed">
             <thead>
                 <tr>
@@ -97,4 +103,5 @@ $eqLogics = eqLogic::byType('tesla');
 </div>
 
 <?php include_file('desktop', 'tesla', 'js', 'tesla'); ?>
+<?php include_file('core', 'plugin.template', 'js'); ?>
 <?php include_file('core', 'plugin.ajax', 'js'); ?>

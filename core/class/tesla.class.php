@@ -19,6 +19,9 @@
 /******************************* Includes *******************************/ 
 require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 
+
+
+
 class tesla extends eqLogic {
     /******************************* Attributs *******************************/ 
     /* Ajouter ici toutes vos variables propre à votre classe */
@@ -46,6 +49,81 @@ class tesla extends eqLogic {
     }
     */
 	
+	// Retrieve data for all vehicles
+	public static function pull($_options) {
+		//log::add('tesla', 'error', "Vehicle data updated through API");
+		//if 
+		
+		$eqLogics = eqLogic::byType('tesla'); // ne pas oublier de modifier pour le nom de votre plugin
+    	// la liste des équipements
+		try {
+			$list = tesla::listAllVehicles();
+		} catch (Exception $e) {
+			$message = displayExeption($e); //TODO: Not Used
+			log::add('tesla', 'error', $e);
+		}
+		
+    	foreach ($eqLogics as $eqLogic) {
+    		log::add('tesla', 'error', "Pulling data for " . $eqLogic->getHumanName(false, false) . " VIN: ". $eqLogic->getConfiguration('vin'));
+    		
+    		foreach ($list->{'response'} as $car){
+    			if ($car->{'vehicle_id'} == $eqLogic->getLogicalId()){
+    				$eqLogic->setConfiguration('state', $car->{'state'});	
+    			}	
+    		}
+    		
+    		try {
+    			log::add('tesla', 'error', "Getting Data " );
+    			$carData = tesla::getVehicleData($eqLogic->getConfiguration('id'));
+    			log::add('tesla', 'error', $carData);
+    			
+    			foreach ($eqLogic->getCmd('info') as $cmd) {
+    				$cmd->event($carData->{$cmd->getLogicalId()});
+    				log::add('tesla', 'error', "Adding " . $cmd->getLogicalId() . " : ". $carData->{$cmd->getLogicalId()});
+    			}
+    		} catch (Exception $e) {
+    			$message = displayExeption($e); //TODO: Not Used
+    			log::add('tesla', 'error', $e);
+    		}
+    	}
+	}
+	
+	public static function getVehicleData($vehicle_id=null){
+		if ($vehicle_id == null){
+			throw new Exception(__("no vehicle_id provided", __FILE__));
+		}
+					
+		log::add('tesla', 'error', "Getting Data for " . $vehicle_id);
+				
+		// Need to complete request URL
+		$url = "https://owner-api.teslamotors.com/api/1/vehicles/" . $vehicle_id . "/data_request/charge_state";
+		$token = config::byKey('token', 'tesla');
+		
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+		curl_setopt($ch, CURLOPT_HEADER, FALSE);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+				"Authorization: Bearer " . $token,
+				'Content-Type: application/json'
+		));
+		$response = curl_exec($ch);
+		$error = curl_error($ch);
+		$errno = curl_errno($ch);
+		curl_close($ch);
+		
+		log::add('tesla', 'error', "API Response " . $response . " error " .$errno );
+		
+		if($errno) {
+			throw new Exception(__("Curl Error : " . curl_strerror($errno), __FILE__));
+			return null;
+		}
+		
+		return json_decode($response)->{'response'};
+		
+	}
+	
+
 	public static function checkAPI() {
 		$url = "https://owner-api.teslamotors.com/api/1/vehicles";
 		
@@ -64,7 +142,37 @@ class tesla extends eqLogic {
 		$errno = curl_errno($ch);
 		curl_close($ch);
 		
+		if($errno) {
+			log::add('tesla', 'Error', "Curl Error : " . curl_strerror($errno));
+		}
+		
 		return json_decode($response)->{'count'};		
+	}
+	
+	public static function listAllVehicles() {
+		$url = "https://owner-api.teslamotors.com/api/1/vehicles";
+	
+		$token = config::byKey('token', 'tesla');
+	
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+		curl_setopt($ch, CURLOPT_HEADER, FALSE);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+				"Authorization: Bearer " . $token,
+				'Content-Type: application/json'
+		));
+		$response = curl_exec($ch);
+		$error = curl_error($ch);
+		$errno = curl_errno($ch);
+		curl_close($ch);
+		
+		if($errno) {
+			throw new Exception(__("Curl Error : " . curl_strerror($errno), __FILE__));
+		}
+	
+		$list = json_decode($response);
+		return $list;
 	}
 	
 	public static function createToken($email=null, $password=null) {
@@ -93,7 +201,7 @@ class tesla extends eqLogic {
 		curl_close($ch);
 		
 		if ($response === false) {
-			log::add('Tesla', 'Error', $error);
+			log::add('tesla', 'Error', $error);
 			throw new Exception(__($error, __FILE__));
 		} 
 		
@@ -111,9 +219,75 @@ class tesla extends eqLogic {
 				
 		return json_decode($response)->{'access_token'};
 	}
+	
+	public static function syncEqLogicWithTeslaSite($_logical_id = null) {
+		$message = '';
+		try {
+			$list = self::listAllVehicles();
+			$num = $list->{'count'};
+		} catch (Exception $e) {
+			$num = -1;
+			$message = displayExeption($e);
+			log::add('tesla', 'error', $e);
+		}
+
+		if ( $num <= 0) {
+			if ($message == '')
+				$message = "Aucun vehicule identifie via l'API Tesla";
+			nodejs::pushUpdate('jeedom::alert', array(
+					'level' => 'warning',
+					'message' => __($message, __FILE__),
+			));
+			return;
+		}
+		
+		foreach ($list->{'response'} as $car){
+			
+			$eqLogic = self::byLogicalId($car->{'vehicle_id'}, 'tesla');
+			if (!is_object($eqLogic)) {
+				$eqLogic = new eqLogic();
+				$eqLogic->setEqType_name('tesla');
+				$eqLogic->setIsEnable(1);
+				$eqLogic->setLogicalId($car->{'vehicle_id'});
+				$eqLogic->setName($car->{'display_name'});
+				$eqLogic->setConfiguration('options_codes', $car->{'options_codes'});
+				$eqLogic->setConfiguration('vin', $car->{'vin'});
+				$eqLogic->setConfiguration('state', $car->{'state'});
+				$eqLogic->setConfiguration('id', $car->{'id'});
+				$eqLogic->setIsVisible(1);
+				$eqLogic->save();
+				//$eqLogic = tesla::byId($eqLogic->getId());
+				//$include_device = $eqLogic->getId();
+				//$eqLogic->createCommand(false, $result);
+				
+				log::add('tesla', 'error', ' Voiture ajoutee, VIN: ' . $car->{'vin'});
+				
+				nodejs::pushUpdate('jeedom::alert', array(
+						'level' => 'info',
+						'message' => 'Nouvelle voiture ajoutee',
+				));
+			} else {
+				// update data here
+				
+				$eqLogic->setName($car->{'display_name'});
+				$eqLogic->setConfiguration('options_codes', $car->{'options_codes'});
+				$eqLogic->setConfiguration('vin', $car->{'vin'});
+				$eqLogic->setConfiguration('state', $car->{'state'});
+				
+				log::add('tesla', 'error', 'Voiture mise a jour, VIN: ' . $car->{'vin'});
+				$eqLogic->save();
+			
+			}
+		}
+		return;
+	}
+		
+		
+		
  
     /*************************** Methode d'instance **************************/ 
  
+	
 
     /************************** Pile de mise à jour **************************/ 
     
@@ -161,7 +335,6 @@ class tesla extends eqLogic {
     /* fonction appelé pendant la séquence de sauvegarde après l'insertion 
      * dans la base de données pour une mise à jour d'une entrée */
     public function postUpdate() {
-        
     }
 
     /* fonction appelé pendant la séquence de sauvegarde avant l'insertion 
@@ -178,7 +351,245 @@ class tesla extends eqLogic {
 
     /* fonction appelé après la fin de la séquence de sauvegarde */
     public function postSave() {
-        
+    	$state = $this->getCmd(null, 'battery_heater_on');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('battery_heater_on');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(false);
+    		$state->setName(__('Battery Heater On', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('binary');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'charge_port_door_open');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('charge_port_door_open');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(false);
+    		$state->setName(__('Charge Port Door Open', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('binary');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'charging_state');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('charging_state');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(false);
+    		$state->setName(__('Charging State', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('string');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'battery_current');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('battery_current');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(false);
+    		$state->setName(__('Battery Current', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('string');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'battery_level');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('battery_level');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(true);
+    		$state->setName(__('Battery Level', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('numeric');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'charger_voltage');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('charger_voltage');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(true);
+    		$state->setName(__('Charger Voltage', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('numeric');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'charger_pilot_current');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('charger_pilot_current');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(true);
+    		$state->setName(__('Charger Pilot Current', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('numeric');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'charger_actual_current');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('charger_actual_current');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(true);
+    		$state->setName(__('Charger Actual Current', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('numeric');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'charger_power');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('charger_power');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(true);
+    		$state->setName(__('Charger Power', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('numeric');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'time_to_full_charge');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('time_to_full_charge');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(false);
+    		$state->setName(__('Time to Full Charge', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('string');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'charge_current_request');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('charge_current_request');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(false);
+    		$state->setName(__('Charge Current Request', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('string');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'charge_current_request_max');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('charge_current_request_max');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(false);
+    		$state->setName(__('Charge Current Request Max', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('string');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'charge_energy_added');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('charge_energy_added');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(false);
+    		$state->setName(__('Charge Energy Added', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('numeric');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'charge_miles_added_ideal');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('charge_miles_added_ideal');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(false);
+    		$state->setName(__('Charge Miles Added Ideal', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('numeric');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'battery_range');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('battery_range');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(false);
+    		$state->setName(__('Battery Range', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('numeric');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'est_battery_range');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('est_battery_range');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(false);
+    		$state->setName(__('Estimated Battery Range', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('numeric');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	$state = $this->getCmd(null, 'ideal_battery_range');
+    	if (!is_object($state)) {
+    		$state = new teslaCmd();
+    		$state->setLogicalId('ideal_battery_range');
+    		$state->setIsVisible(1);
+    		$state->setIsHistorized(false);
+    		$state->setName(__('Ideal Battery Range', __FILE__));
+    	}
+    	$state->setType('info');
+    	$state->setSubType('numeric');
+    	$state->setEventOnly(1);
+    	$state->setEqLogic_id($this->getId());
+    	$state->save();
+    	
+    	log::add('tesla', 'Error', "Car saved");
     }
 
     /* fonction appelé avant l'effacement d'une entrée */
@@ -216,7 +627,14 @@ class teslaCmd extends cmd {
     */
 
     public function execute($_options = array()) {
-        
+    	log::add('tesla', 'Error', "in function execute");
+    	throw new Exception(__("test dans execute", __FILE__));
+    	
+    	if (!isset($_options['title']) && !isset($_options['message'])) {
+    		throw new Exception(__("Le titre ou le message ne peuvent être tous les deux vide", __FILE__));
+    	}
+    	$eqLogic = $this->getEqLogic();
+    	//To be continued ...
     }
 
     /***************************** Getteur/Setteur ***************************/ 
