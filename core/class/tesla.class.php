@@ -171,7 +171,7 @@ class tesla extends eqLogic {
 			throw new Exception(__("Curl Error : " . curl_strerror($errno), __FILE__));
 		}
 	
-		$list = json_decode($response);
+		$list = json_decode($response, false, 512, JSON_BIGINT_AS_STRING);
 		return $list;
 	}
 	
